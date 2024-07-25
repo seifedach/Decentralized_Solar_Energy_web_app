@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Energy Forecast</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+      .loading {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2rem;
+        color: #007bff;
+      }
+      .results {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="mt-5">Energy Forecast</h1>
+      <form id="forecast-form">
+        <div class="form-group">
+          <label for="days">Number of Days to Predict:</label>
+          <input type="number" class="form-control" id="days" name="days" value="3" min="1" max="10">
+        </div>
+        <div class="form-group">
+          <label for="action">Action:</label>
+          <select class="form-control" id="action" name="action">
+            <option value="Sum">Predict Total Energy</option>
+            <option value="Plot">Plot Predictions</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Predict</button>
+      </form>
+      <div class="loading">Loading...</div>
+      <div class="results"></div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script>
+      $('#forecast-form').on('submit', function(e) {
+        e.preventDefault();
+        $('.loading').show();
+        $('.results').empty();
+
+        $.ajax({
+          url: '/forecast',
+          method: 'POST',
+          data: $(this).serialize(),
+          success: function(response) {
+            $('.loading').hide();
+            if (response.result === 'sum') {
+              $('.results').html('<h3>The Predicted Total Energy Produced in the Next ' + response.days_number + ' Days</h3><p class="lead">' + response.value + ' Watt</p>');
+            } else if (response.result === 'plot') {
+              $('.results').html('<h3>Predicted Values for the Next ' + response.days_number + ' Days</h3><img src="data:image/png;base64,' + response.value + '" alt="Plot">');
+            }
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

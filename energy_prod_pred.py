@@ -35,21 +35,10 @@ time_step = 512 #8*24  # The number of time steps you want to use for each input
 # Predict 96 steps ahead
 forecast_steps = 24*4
 
-X, y = create_dataset(scaled_data, time_step)
-
-# Reshape input to be [samples, time steps, features] which is required for LSTM
-X = X.reshape(X.shape[0], X.shape[1], 1)
-
-# Split data into train and test sets
-train_size = int(len(X) * 0.8)
-test_size = len(X) - train_size
-X_train, X_test = X[0:train_size], X[train_size:len(X)]
-y_train, y_test = y[0:train_size], y[train_size:len(y)]
-
 
 
 # Load the model
-loaded_model = tf.keras.models.load_model('LSTM_user1 (3).keras')
+loaded_model = tf.keras.models.load_model('LSTM_user1.keras')
 
 
 
@@ -131,4 +120,30 @@ scale_slider = widgets.IntSlider(
 )
 
 # Use interact to create an interactive plot
-interact(forecast_and_plot, days_number=days_slider, scale=scale_slider)
+def interactive_dashboard(days_slider, scale_slider):
+    interact(forecast_and_plot, days_number=days_slider, scale=scale_slider)
+
+
+def forecast(days_number, total=0):
+    # Predict forecast_steps ahead
+    forecast_steps = 24 * days_number
+    future_predictions = predict_future(loaded_model, scaled_data[:-forecast_steps], time_step, forecast_steps)
+
+    # Invert predictions to get the original scale
+    future_predictions = scaler.inverse_transform(future_predictions)
+
+    if total==0:
+        return future_predictions
+    else:
+        return np.round(future_predictions.sum(),3)
+
+
+#def main():
+
+if __name__ == '__main__':
+    days_number = int(input("Insert the number of days you want to predict : "))
+
+    print(f"The predicted produced energy in the following {days_number} days: {forecast(days_number, total = 1)} Watt")
+    
+    #interact(forecast_and_plot, days_number=days_slider, scale=scale_slider)
+    #main()
