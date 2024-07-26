@@ -35,10 +35,10 @@ def predict_future(model, data, time_step, forecast_steps):
     
     return np.array(lst_output).reshape(-1, 1)
 
-def forecast(days_number, total=0):
-    forecast_steps = 24 * days_number
+def forecast(num_hours, total=0):
+    forecast_steps = num_hours #24 * days_number
     future_predictions = predict_future(loaded_model, scaled_data, time_step, forecast_steps)
-    future_predictions = scaler.inverse_transform(future_predictions)
+    future_predictions = np.maximum(0,scaler.inverse_transform(future_predictions))
 
     if total == 0:
         return future_predictions
@@ -51,25 +51,25 @@ def home():
 
 @app.route('/forecast', methods=['POST'])
 def forecast_web():
-    days_number = int(request.form['days'])
+    num_hours = int(request.form['hours'])
     action = request.form['action']
 
     if action == 'Sum':
-        total_prediction = forecast(days_number, total=1)
-        return jsonify({'result': 'sum', 'value': total_prediction, 'days_number': days_number})
+        total_prediction = forecast(num_hours, total=1)
+        return jsonify({'result': 'sum', 'value': total_prediction, 'num_hours': num_hours})
     else:
-        future_predictions = forecast(days_number, total=0)
+        future_predictions = forecast(num_hours, total=0)
         predictions = future_predictions.flatten().tolist()
         plot_url = create_plot(predictions)
-        return jsonify({'result': 'plot', 'value': plot_url, 'days_number': days_number})
+        return jsonify({'result': 'plot', 'value': plot_url, 'num_hours': num_hours})
 
 def create_plot(predictions):
     plt.figure(figsize=(10, 5))
     plt.plot(predictions, label='Predicted Values', color='blue')
     plt.title('Forecasted Values')
-    plt.xlabel('Time Steps (each step = 1 hour)')
+    #plt.xlabel('Time Steps (each step = 1 hour)')
     plt.ylabel('Value (Watt)')
-    plt.xticks(ticks=np.arange(0, len(predictions), 12), labels=[f'{i//2}h' for i in range(0, len(predictions), 12)])
+    plt.xticks(ticks=np.arange(0, len(predictions), 6), labels=[f'{i}h' for i in range(0, len(predictions), 6)])
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
